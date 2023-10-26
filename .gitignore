@@ -1,0 +1,3 @@
+#ignore all spending details.
+*.csv
+*.xlsx
