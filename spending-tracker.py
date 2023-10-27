@@ -14,6 +14,7 @@ For example, I need to be able to dump all the data in, and then classify the di
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.cluster import KMeans
 
 FILENAME = "transactions-year.csv"
 
@@ -29,6 +30,8 @@ class HEADER :
     CONVERSION_COST=  "ConversionCharge"
 
 
+PERSONAL_SPENDING_TYPES = ["Rent", "Bills", "Flat things", "Groceries", "work payments", ""]
+
 def main():
     """Main function for my code"""
     data = pd.read_csv(FILENAME)
@@ -40,7 +43,37 @@ def main():
     general_spending = data.loc[data[HEADER.SPEND_TYPE] == "Visa Purchase"]
     general_spending_per_day = get_total_spending_per_day(general_spending)
 
-    perform_k_means_clustering(data, 5)
+    print(prompt_for_spending_types(data).head(50))
+
+
+def prompt_for_spending_types(data):
+    """ask user to list the types of things they spend money on.
+    then perfroms k-means classification and asks the user to assign them """
+    print("Label the catagories of things that you spend money on (type q to stop):\n")
+    catagories = []
+    
+    new_data, inertia = perform_k_means_clustering(data, 10)
+
+    mapping = {}
+    for catagory in new_data["classification"].unique():
+        print("Please assign a label to spends that look like this:\n")
+        print(data[data["classification"] == catagory].head(15))
+        for i in range(len(catagories)):
+            print(f"{catagories[i]}: {(i)}")
+        for i in range(len(catagories)):
+            print(f"{catagories[i]}: ({i})")
+        print("New: (-)")
+        choice = input(": ")
+        if choice == "-":
+            catagories.append(input("enter a new catagory: "))
+            mapping[catagory] = catagories[-1]
+        else:
+            choice = int(choice)
+            mapping[catagory] = catagories[choice]
+    
+    new_data["classification"] = new_data["classification"].replace(mapping)
+
+    return new_data
 
 
 def get_spending_types(data):
@@ -69,32 +102,81 @@ def perform_k_means_clustering(data, k):
     foreign = data[HEADER.FOREIGN]
     conversion = data[HEADER.CONVERSION_COST]
 
-    chopped_data = data.drop([HEADER.DATE, HEADER.CODE, HEADER.FOREIGN, HEADER.CONVERSION_COST], axis=1, inplace=False)
+    chopped_data = data.drop([HEADER.DATE, HEADER.CODE, HEADER.FOREIGN, HEADER.CONVERSION_COST, HEADER.REF], axis=1, inplace=False)
     #one-hot encoding:
     spending_types = chopped_data[HEADER.SPEND_TYPE].unique()
     locations = chopped_data[HEADER.LOCATION].unique()
-    references = chopped_data[HEADER.REF].unique()
     particulars = chopped_data[HEADER.PARTICULARS].unique()
 
-    encoded_data = pd.get_dummies(chopped_data, columns=[HEADER.SPEND_TYPE, HEADER.LOCATION, HEADER.REF, HEADER.PARTICULARS])
+    encoded_data = pd.get_dummies(chopped_data, columns=[HEADER.SPEND_TYPE, HEADER.LOCATION, HEADER.PARTICULARS])
     encoded_data[HEADER.QUANTITY] = (encoded_data[HEADER.QUANTITY] - encoded_data[HEADER.QUANTITY].min()) / (encoded_data[HEADER.QUANTITY].max()-encoded_data[HEADER.QUANTITY].min())
     # For now normalise linearly, but investigate normal?
     
 
     # Step two: randomly allocate k-means in the search space
-    vector_dimension = encoded_data.shape[1]
-    k_means = np.random.rand(k, vector_dimension)
-    k_means = pd.DataFrame(k_means)
-    print(k_means.head())
+    k_means = KMeans(n_clusters=10)
+    k_means.fit(encoded_data)
+    cluster_assignments = k_means.labels_
 
 
     
+    #result, inertia = k_means_no_library(encoded_data, k)
+        
 
-    # Step three: assign each point to the closest mean, and then move that mean to the average of all the points it is assigned to
-        # repeat until 
     
     # Step 4: add the catagories to the original dataset
-    #return
+    data["classification"] = cluster_assignments
+    return data, k_means.inertia_
+
+def k_means_no_library(encoded_data, k):
+    """This is my own implementation of the k-means algorithm. It needs a tidy up but I wanted to see if i could 
+    do it without a library"""
+    vector_dimension = encoded_data.shape[1]
+    k_means = {tuple(np.random.rand(vector_dimension)): [] for i in range(k)}
+    
+   
+    last_error = np.inf
+    error = 0
+    TARGET = 0.0001
+    # Step three: assign each point to the closest mean, and then move that mean to the average of all the points it is assigned to
+    while(abs(error - last_error) > TARGET):
+        last_error = error
+        error = 0
+        for id, data_point in encoded_data.iterrows(): # go through and assign all points to their closest neigbour
+            min_distance = np.inf
+            current_closest = None
+            for vector in k_means.keys():
+                k_vector = np.array(vector)
+                new_dist = np.sum((k_vector * data_point) ** 2) 
+                if new_dist < min_distance:
+                    min_distance = new_dist
+                    current_closest = vector
+            k_means[current_closest].append(data_point)
+            error += min_distance
+        new_means = {}
+        for vector, elements in k_means.items():
+            if len(elements) > 0:
+                new_k = np.sum(np.array(elements), axis=0) / len(elements)
+            else:
+                new_k = vector
+            new_means[tuple(new_k)] = []
+        k_means = new_means
+        print(error, last_error)
+
+    result = []
+    k_means = list(k_means.keys())
+    for id, data_point in encoded_data.iterrows():
+        min_distance = np.inf
+        current_closest = None
+        for i in range(len(k_means)):
+            print(len(k_means))
+            k_vector = np.array(k_means[i])
+            new_dist =  np.sum((k_vector * data_point) ** 2)
+            if new_dist < min_distance:
+                    min_distance = new_dist
+                    current_closest = i
+        result.append(current_closest)
+    return result, last_error
 
 def plot_spending_by_time(data):
     """
