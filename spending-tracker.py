@@ -15,12 +15,12 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
-FILENAME = "transactions.csv"
+FILENAME = "transactions-year.csv"
 
 class HEADER :
     SPEND_TYPE = "Type"
     LOCATION =  "Details"
-    PARTICULARS = "Partuculars"
+    PARTICULARS = "Particulars"
     DATE = "Date"
     CODE =  "Code"
     REF =  "Reference"
@@ -39,6 +39,7 @@ def main():
 
     general_spending = data.loc[data[HEADER.SPEND_TYPE] == "Visa Purchase"]
     general_spending_per_day = get_total_spending_per_day(general_spending)
+
     perform_k_means_clustering(data, 5)
 
 
@@ -68,18 +69,26 @@ def perform_k_means_clustering(data, k):
     foreign = data[HEADER.FOREIGN]
     conversion = data[HEADER.CONVERSION_COST]
 
-    chopped_data = data.drop(HEADER.DATE, axis=1, inplace=False)
+    chopped_data = data.drop([HEADER.DATE, HEADER.CODE, HEADER.FOREIGN, HEADER.CONVERSION_COST], axis=1, inplace=False)
     #one-hot encoding:
     spending_types = chopped_data[HEADER.SPEND_TYPE].unique()
     locations = chopped_data[HEADER.LOCATION].unique()
     references = chopped_data[HEADER.REF].unique()
     particulars = chopped_data[HEADER.PARTICULARS].unique()
 
-    encoded_data = pd.get_dummies(columns=[HEADER.SPEND_TYPE, HEADER.LOCATION, HEADER.REF, HEADER.PARTICULARS])
-
-    print(encoded_data.describe())
+    encoded_data = pd.get_dummies(chopped_data, columns=[HEADER.SPEND_TYPE, HEADER.LOCATION, HEADER.REF, HEADER.PARTICULARS])
+    encoded_data[HEADER.QUANTITY] = (encoded_data[HEADER.QUANTITY] - encoded_data[HEADER.QUANTITY].min()) / (encoded_data[HEADER.QUANTITY].max()-encoded_data[HEADER.QUANTITY].min())
+    # For now normalise linearly, but investigate normal?
+    
 
     # Step two: randomly allocate k-means in the search space
+    vector_dimension = encoded_data.shape[1]
+    k_means = np.random.rand(k, vector_dimension)
+    k_means = pd.DataFrame(k_means)
+    print(k_means.head())
+
+
+    
 
     # Step three: assign each point to the closest mean, and then move that mean to the average of all the points it is assigned to
         # repeat until 
