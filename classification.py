@@ -1,6 +1,13 @@
+"""
+    Module that handles the classification of data entries into spending types.
+
+    author: Ben Shirley
+    Date: 29 oct 2023
+"""
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from kmodes.kprototypes import KPrototypes
 from transaction_structure import *
 
 def encode_data_for_learning(data: pd.DataFrame) -> pd.DataFrame:
@@ -63,27 +70,11 @@ def perform_k_means_clustering(data: pd.DataFrame, k: int) -> pd.DataFrame:
         Data: data to be catagorised
         k: the number of clusters to be formed
     """
-
-    # Step one: reduce data to be entirely numberical
-    # In the data set, we have all of the variables in HEADER to consider
-    # However, date likely will not affect the data
-    # Try: using number for date, or day of week
-    # For now I will ignore it
-    # For now normalise linearly, but investigate normal?
    
     encoded_data = encode_data_for_learning(data)
-    # Step two: randomly allocate k-means in the search space
-    #k_means = KMeans(n_clusters=10)
-    #k_means.fit(encoded_data)
-    #cluster_assignments = k_means.labels_
-
-
-    
+   
     cluster_assignments, inertia = k_means_no_library(encoded_data, k)
         
-
-    
-    # Step 4: add the catagories to the original dataset
     data["classification"] = cluster_assignments
     return data, inertia
 

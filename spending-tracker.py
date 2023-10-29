@@ -17,8 +17,9 @@ import numpy as np
 from sklearn.cluster import KMeans
 from kmodes.kprototypes import KPrototypes
 
-from transaction_structure import *
-from classification import *
+from transaction_structure import HEADER
+import classification as classifier
+from user_interface import user_interface
 FILENAME = "transactions-year.csv"
 
 PERSONAL_SPENDING_TYPES = ["Rent", "Bills", "Flat things", "Groceries", "work payments", ""]
@@ -27,21 +28,7 @@ def main():
     """Main function for my code"""
     data = pd.read_csv(FILENAME)
     data[HEADER.DATE] = pd.to_datetime(data[HEADER.DATE])
-
-    spends = data.loc[(data[HEADER.QUANTITY] < 0) & (data[HEADER.SPEND_TYPE] != "Transfer")]
-    earnings = data.loc[data[HEADER.QUANTITY] >= 0]
-
-    general_spending = data.loc[data[HEADER.SPEND_TYPE] == "Visa Purchase"]
-    general_spending_per_day = get_total_spending_per_day(general_spending)
-
-    #elbow_method_for_number_clusters(data)
-    classified_data = prompt_for_spending_types(data)
-    print(classified_data.head(50))
-    classified_data.to_csv("classified_dataset.csv")
-    #for classification in classified_data["classification"].unique():
-    #    classified_data[classified_data["classification"] == classification, "Amount"].plot(kind="hist", figsize=(10,8), label=classification, legend=True)
-    #plt.show()
-
+    user_interface()
 
 
 def prompt_for_spending_types(data):
@@ -60,7 +47,7 @@ def prompt_for_spending_types(data):
     print("Label the catagories of things that you spend money on (type q to stop):\n")
     catagories = []
     
-    new_data, inertia = perform_k_prototypes_clustering(data, 6)
+    new_data, inertia = classifier.perform_k_prototypes_clustering(data, 6)
 
     mapping = {}
     for catagory in new_data["classification"].unique():
@@ -119,6 +106,11 @@ def plot_spending_by_time(data):
     plt.axes = True
     plt.title("Spending over time")
     plt.show()
+
+def display_weekly_spending(data):
+    """displays a time series that displays spending by week"""
+    pass
+    
 
 
 def display_spending_quantity_by_type(data, spend_type):
