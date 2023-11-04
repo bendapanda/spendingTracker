@@ -1,0 +1,10 @@
+class HEADER:
+    SPEND_TYPE = "Type"
+    LOCATION = "Details"
+    PARTICULARS = "Particulars"
+    DATE = "Date"
+    CODE = "Code"
+    REF = "Reference"
+    QUANTITY = "Amount"
+    FOREIGN = "ForeignCurrencyAmount"
+    CONVERSION_COST = "ConversionCharge"

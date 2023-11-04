@@ -6,6 +6,8 @@ Classify what different entries mean,
 Store stuff in a database
 Track my total funds over time
 
+- compile information from multiple accounts into one mega balance
+
 For example, I need to be able to dump all the data in, and then classify the different types of data
 
 @author Ben Shirley
@@ -13,22 +15,15 @@ For example, I need to be able to dump all the data in, and then classify the di
 """
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
-from sklearn.cluster import KMeans
-from kmodes.kprototypes import KPrototypes
+import glob
 
 from transaction_structure import HEADER
 import classification as classifier
-from user_interface import user_interface
+import ui_helper as ui_helper
 FILENAME = "transactions-year.csv"
 
-PERSONAL_SPENDING_TYPES = ["Rent", "Bills", "Flat things", "Groceries", "work payments", ""]
-
-def main():
-    """Main function for my code"""
-    data = pd.read_csv(FILENAME)
-    data[HEADER.DATE] = pd.to_datetime(data[HEADER.DATE])
-    user_interface()
+PERSONAL_SPENDING_TYPES = ["Rent", "Bills", "Flat things",
+                           "Groceries", "work payments", ""]
 
 
 def prompt_for_spending_types(data):
@@ -110,7 +105,22 @@ def plot_spending_by_time(data):
 def display_weekly_spending(data):
     """displays a time series that displays spending by week"""
     pass
-    
+
+def save_data(data: pd.DataFrame) -> None:
+    """saves a data file as a .csv file for easy retreval at a later date"""
+    filename = "../data/" + input("Please enter the name your file should be saved as: ") + ".csv"
+    file_exists = glob.glob(filename)
+    if not file_exists:
+        data.to_csv(filename)
+        print("File saved!")
+    else:
+        print("This file already exists! Are you sure you want to replace it?")
+        if ui_helper.get_confirmation():
+            data.to_csv(filename)
+            print("File saved!")
+    return
+
+
 
 
 def display_spending_quantity_by_type(data, spend_type):
@@ -126,12 +136,16 @@ def display_spending_quantity_by_type(data, spend_type):
                                                                     legend=True,
                                                                     label=spend_type)
 
-def display_csv_info(data):
+def display_general_info(data):
     """funciton that prints information about a csv spending file""" 
     print(data.info())
     print(data.head())
 
     spending_types = data[HEADER.SPEND_TYPE].unique()
     print(f"The types of purchases you made were: \n {spending_types}")
-if __name__ == "__main__":
-    main()
+
+def format_data(data: pd.DataFrame) -> pd.DataFrame:
+    """formats inputted data into a more usable format"""
+
+    data[HEADER.DATE] = pd.to_datetime(data[HEADER.DATE], dayfirst=True)
+    return data
