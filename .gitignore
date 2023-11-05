@@ -2,6 +2,7 @@
 *.csv
 *.xlsx
 *.db
+*.pyc
 tests/__pycache__/
 source/__pycache__/
 __pycache__/
