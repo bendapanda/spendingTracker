@@ -51,7 +51,6 @@ def user_interface():
     elif action == UserAction.BACK:
         user_interface()
         return
-    data[HEADER.DATE] = pd.to_datetime(data[HEADER.DATE])
     
     # now display options for what we want to do with that data
     print("great!, now what would you like to do with this data?")
