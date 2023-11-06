@@ -31,7 +31,16 @@ def get_valid_datetime(message):
         print("Invalid Format, please try again.")
         return get_valid_datetime(message)
 
-
+def get_natural_number(message: str) -> int:
+    number = input(message)
+    try:
+        number = int(number)
+        if number < 0:
+            raise ValueError
+        return number
+    except ValueError:
+        print("That was not a valid number!")
+        return get_natural_number(message)
 
 def display_new_screen_ribbon():
     """prints a banner for moving to a new screen"""
