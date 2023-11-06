@@ -28,7 +28,18 @@ def encode_data_for_learning(data: pd.DataFrame) -> pd.DataFrame:
     encoded_data[HEADER.QUANTITY] = (encoded_data[HEADER.QUANTITY] - encoded_data[HEADER.QUANTITY].min()) / (encoded_data[HEADER.QUANTITY].max()-encoded_data[HEADER.QUANTITY].min())
     
     return encoded_data
-def elbow_method_for_number_clusters(data):
+def elbow_method_for_number_clusters(data) -> int:
+    k=1
+    old_cost = np.inf
+    new_cost = 1000
+    while old_cost / new_cost > 1.01:
+        old_cost = new_cost
+        new_data, new_cost = perform_k_prototypes_clustering(data, k)
+        k += 1
+    return k
+    
+
+def elbow_method_for_number_clusters_with_graph(data):
     """graphs the overall cost of the k-prototype clustering varying values of k to 
     see which number of clusters fits the data best"""
     cost_values = []
@@ -40,8 +51,6 @@ def elbow_method_for_number_clusters(data):
         new_data, new_cost = perform_k_prototypes_clustering(data, k)
         cost_values.append(new_cost)
         k += 1
-    
-    #plot the data
     plt.figure(figsize=(8, 6))
     plt.plot(range(1, len(cost_values)+1), cost_values, marker='o', linestyle='--', color='b')
     plt.xlabel('Number of Clusters (k)')
