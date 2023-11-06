@@ -67,7 +67,9 @@ def options_screen(data):
         "plot spending by time" : tracker.plot_spending_by_time,
         "perform classification" : tracker.prompt_for_spending_types,
         "analyse segment of the data": section_data_screen,
-        "save data" : tracker.save_data
+        "save data" : tracker.save_data,
+        "combine this data with another file" : None,
+        "Add metadata": None
     }
 
     keys = list(options.keys())
@@ -108,7 +110,9 @@ def options_screen(data):
 
     
 def get_user_file() -> pd.DataFrame:
-    """prompts the user to enter the name of the file they want to analyse"""
+    """prompts the user to enter the name of the file they want to analyse
+    TODO: ensure file is in the correct format
+    """
     response = get_input("Please enter the name of the file you want to analyse: ")
     if response.status == UserAction.VALID:
         filename = response.message
@@ -119,7 +123,7 @@ def get_user_file() -> pd.DataFrame:
                 data = tracker.format_data(data)
                 return data, UserAction.VALID
             except FileNotFoundError:
-                print("Something went wrong, try again")
+                print("We couldn't find that file, try again")
                 return get_user_file()
         elif extension == "xlsx":
             try:
@@ -136,6 +140,16 @@ def get_user_file() -> pd.DataFrame:
         return None, UserAction.BACK
     elif response.status == UserAction.QUIT:
         return None, UserAction.QUIT
+    
+def combine_two_files(data: pd.DataFrame) -> pd.DataFrame:
+    """prompts the user for another file, combines it with the given file,
+    and then combines the two, returning a new options menu with the new data"""
+    print("Choose a dataset to combine with this one!")
+    file_to_combine_with = get_user_file()
+
+def get_file_metadata(data: pd.DataFrame):
+    """prompts the user to input metadata such as the account number, the name of the bank account,
+    the current balance of the file, et cetera"""
 
 def get_input(propmt: str) -> UserResponse:
     """prompts the user for input, and checks if they want to quit"""
@@ -157,7 +171,7 @@ def section_data_screen(data):
         "get spends only" : get_spends_only,
         "get balance increases only": get_balance_increases_only,
         "trim data based on transaction type": trim_data_based_on_transaction_type,
-        "trim data based on date": trim_by_date,
+        "trim data based on date (super buggy)": trim_by_date,
         "trim data based on classification": None
     }
 
@@ -196,7 +210,9 @@ def section_data_screen(data):
 
 def trim_by_date(data):
     """prompts the user for a date they would like to trim the data by, then takes them to
-    a new options screen"""
+    a new options screen
+    TODO: This is super buggy at the moment, please do not use!
+    """
     ui_helper.display_new_screen_ribbon()
     print(f"This data stretches between {data[HEADER.DATE].min()} and {data[HEADER.DATE].max()}")
     start_date = ui_helper.get_valid_datetime("Select starting date (input '-' to select no date).")
