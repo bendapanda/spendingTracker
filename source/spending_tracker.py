@@ -25,6 +25,20 @@ FILENAME = "transactions-year.csv"
 PERSONAL_SPENDING_TYPES = ["Rent", "Bills", "Flat things",
                            "Groceries", "work payments", ""]
 
+def get_valid_classifier_input(max_int) -> str:
+    """prompts the user to enter a valid integer or '-' with value less than equal to the 
+    max allowable integer"""
+    choice  = input(" : ")
+    try:
+        if choice == '-':
+            return choice
+        else:
+            int_choice = int(choice)
+            return choice
+    except ValueError:
+        print("Invalid input, please try again.")
+        return get_valid_classifier_input()
+
 
 def prompt_for_spending_types(data):
     """ask user to list the types of things they spend money on.
@@ -39,6 +53,14 @@ def prompt_for_spending_types(data):
     TODO: figure out how many catagories the data should be split into automatically
     TODO: add invalid input catching
     """
+    print("Welcome to the data classification menu. Would you like to run a test for the ideal number of partitions?")
+    if ui_helper.get_confirmation():
+        # run elbow method, but without graph
+        k = classifier.elbow_method_for_number_clusters()
+    else:
+        k = ui_helper.get_natural_number("How many partitions should your data be split into?")
+        
+
     print("Label the catagories of things that you spend money on (type q to stop):\n")
     catagories = []
     
@@ -53,7 +75,7 @@ def prompt_for_spending_types(data):
         for i in range(len(catagories)):
             print(f"{catagories[i]}: ({i})")
         print("New: (-)")
-        choice = input(": ")
+        choice = get_valid_classifier_input()
         if choice == "-":
             catagories.append(input("enter a new catagory: "))
             mapping[catagory] = catagories[-1]
